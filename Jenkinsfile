@@ -26,6 +26,21 @@ pipeline {
                 '''
             }
         }
+
+        stage('Build frontend image') {
+            steps {
+                sh '''
+                    docker buildx build \
+                        --platform linux/amd64 \
+                        --load \
+                        -t "todo-web:jenkins-$BUILD_NUMBER" \
+                        frontend
+
+                    docker image inspect "todo-web:jenkins-$BUILD_NUMBER" \
+                        --format '{{.Os}}/{{.Architecture}} {{.Id}}'
+                '''
+            }
+        }
     }
 
     post {

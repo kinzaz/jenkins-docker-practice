@@ -3,6 +3,14 @@ pipeline {
         label 'docker-builder'
     }
 
+    parameters {
+        booleanParam(
+            name: 'SIMULATE_FAILURE',
+            defaultValue: false,
+            description: 'Fail after activation to test automatic rollback'
+        )
+    }
+
     stages {
         stage('Inspect environment') {
             steps {
@@ -119,7 +127,7 @@ pipeline {
                         -o StrictHostKeyChecking=yes \
                         -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
                         devops@177.203.59.227 \
-                        "/home/devops/docker-jenkins/deploy-web.sh jenkins-$BUILD_NUMBER"
+                        "/home/devops/docker-jenkins/deploy-web.sh jenkins-$BUILD_NUMBER $SIMULATE_FAILURE"
                 '''
             }
         }

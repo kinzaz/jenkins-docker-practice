@@ -109,6 +109,11 @@ chmod 600 "$env_temp"
 rollback_needed=true
 mv "$env_temp" .env
 
+sudo -n /usr/bin/docker compose \
+    --project-directory /home/devops/docker-jenkins \
+    -f /home/devops/docker-jenkins/compose.yaml \
+    pull api
+
 compose_api
 check_release "$tag"
 

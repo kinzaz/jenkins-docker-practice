@@ -100,6 +100,36 @@ pipeline {
             }
         }
 
+        stage('Publish frontend image') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'ghcr-push',
+                        usernameVariable: 'GHCR_USER',
+                        passwordVariable: 'GHCR_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set +x
+                        set -eu
+
+                        export DOCKER_CONFIG=$(mktemp -d)
+                        trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+
+                        printf '%s' "$GHCR_TOKEN" |
+                            docker login ghcr.io \
+                                --username "$GHCR_USER" \
+                                --password-stdin
+
+                        image="ghcr.io/kinzaz/todo-web:jenkins-$BUILD_NUMBER"
+
+                        docker tag "todo-web:jenkins-$BUILD_NUMBER" "$image"
+                        docker push "$image"
+                    '''
+                }
+            }
+        }
+
         stage('Check deployment access') {
             steps {
                 withCredentials([

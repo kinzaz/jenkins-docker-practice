@@ -16,6 +16,16 @@ pipeline {
                 '''
             }
         }
+
+        stage('Check Docker') {
+            steps {
+                sh '''
+                    id
+                    docker version
+                    docker buildx version
+                '''
+            }
+        }
     }
 
     post {

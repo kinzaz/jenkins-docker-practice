@@ -92,6 +92,21 @@ pipeline {
                 '''
             }
         }
+
+        stage('Load frontend image') {
+            steps {
+                sh '''
+                    ssh \
+                        -i /home/jenkins-agent/.ssh/todo_deploy \
+                        -o IdentitiesOnly=yes \
+                        -o BatchMode=yes \
+                        -o StrictHostKeyChecking=yes \
+                        -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                        devops@177.203.59.227 \
+                        "sudo -n /usr/bin/docker load < /home/devops/docker-jenkins/todo-web-jenkins-$BUILD_NUMBER.tar"
+                '''
+            }
+        }
     }
 
     post {

@@ -16,9 +16,9 @@ if [[ "$simulate_failure" != true && "$simulate_failure" != false ]]; then
     exit 1
 fi
 
-exec 9>.deploy-web.lock
+exec 9>.deploy.lock
 flock -n 9 || {
-    echo "Another frontend deployment is running" >&2
+    echo "Another deployment is running" >&2
     exit 1
 }
 

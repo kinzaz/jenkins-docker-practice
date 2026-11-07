@@ -1,6 +1,2 @@
-BEGIN;
-
 ALTER TABLE todos
     ADD COLUMN created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-COMMIT;

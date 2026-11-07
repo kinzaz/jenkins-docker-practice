@@ -129,13 +129,9 @@ pipeline {
 
                     docker compose -f compose.ci.yaml up -d --wait db
 
-                    docker compose -f compose.ci.yaml exec -T db \
-                        psql -v ON_ERROR_STOP=1 -U todo -d todo \
-                        < backend/migrations/001_create_todos.sql
+                    COMPOSE_FILE=compose.ci.yaml bash scripts/migrate.sh todo
 
-                    docker compose -f compose.ci.yaml exec -T db \
-                        psql -v ON_ERROR_STOP=1 -U todo -d todo \
-                        < backend/migrations/002_add_created_at.sql
+                    COMPOSE_FILE=compose.ci.yaml bash scripts/migrate.sh todo
 
                     docker compose -f compose.ci.yaml up -d api
 

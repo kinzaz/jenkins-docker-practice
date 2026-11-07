@@ -71,6 +71,27 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deliver frontend image') {
+            steps {
+                sh '''
+                    docker save \
+                        -o "todo-web-jenkins-$BUILD_NUMBER.tar" \
+                        "todo-web:jenkins-$BUILD_NUMBER"
+
+                    scp \
+                        -i /home/jenkins-agent/.ssh/todo_deploy \
+                        -o IdentitiesOnly=yes \
+                        -o BatchMode=yes \
+                        -o StrictHostKeyChecking=yes \
+                        -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                        "todo-web-jenkins-$BUILD_NUMBER.tar" \
+                        devops@177.203.59.227:/home/devops/docker-jenkins/
+
+                    rm "todo-web-jenkins-$BUILD_NUMBER.tar"
+                '''
+            }
+        }
     }
 
     post {

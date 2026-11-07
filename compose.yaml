@@ -16,7 +16,7 @@ services:
       retries: 10
 
   api:
-    image: todo-api:${TODO_TAG:-lesson-5}
+    image: todo-api:${API_TAG:-lesson-5}
     environment:
       HTTP_ADDR: "0.0.0.0:8000"
       DATABASE_URL: "postgres://todo:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/todo?sslmode=disable"
@@ -25,7 +25,7 @@ services:
         condition: service_healthy
 
   web:
-    image: todo-web:${TODO_TAG:-lesson-5}
+    image: todo-web:${WEB_TAG:-lesson-5}
     ports:
       - "127.0.0.1:8080:80"
     depends_on:

@@ -1,5 +1,7 @@
 pipeline {
-    agent any
+    agent {
+        label 'docker-builder'
+    }
 
     stages {
         stage('Inspect environment') {

@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var version = "development"
+
 func main() {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
@@ -34,6 +36,11 @@ func main() {
 	}
 	api := todoAPI{db: db}
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/version", func(w http.ResponseWriter, r *http.Request) {
+		respond(w, http.StatusOK, map[string]string{
+			"version": version,
+		})
+	})
 	mux.HandleFunc("GET /api/health", api.health)
 	mux.HandleFunc("GET /api/todos", api.list)
 	mux.HandleFunc("POST /api/todos", api.create)

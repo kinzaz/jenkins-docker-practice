@@ -5,7 +5,11 @@ RUN go mod download
 COPY *.go ./
 ARG TARGETOS
 ARG TARGETARCH
-RUN CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" go build -trimpath -o /todo-api .
+ARG RELEASE=development
+RUN CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" \
+    go build -trimpath \
+    -ldflags="-X main.version=$RELEASE" \
+    -o /todo-api . \
 
 FROM scratch
 COPY --from=build /todo-api /todo-api

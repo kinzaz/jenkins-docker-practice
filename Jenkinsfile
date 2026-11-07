@@ -109,6 +109,50 @@ pipeline {
             }
         }
 
+        stage('Check backend image') {
+            steps {
+                sh '''
+                    set -eu
+
+                    export COMPOSE_PROJECT_NAME="todo-api-ci-$BUILD_NUMBER"
+
+                    cleanup() {
+                        docker compose -f compose.ci.yaml down -v
+                    }
+
+                    trap cleanup EXIT
+
+                    docker compose -f compose.ci.yaml up -d --wait db
+
+                    docker compose -f compose.ci.yaml exec -T db \
+                        psql -v ON_ERROR_STOP=1 -U todo -d todo \
+                        < backend/migrations/001_create_todos.sql
+
+                    docker compose -f compose.ci.yaml up -d api
+
+                    docker compose -f compose.ci.yaml run --rm check \
+                        --fail --silent --show-error \
+                        --retry 15 --retry-delay 2 --retry-all-errors \
+                        --connect-timeout 2 --max-time 5 \
+                        http://api:8000/api/health
+
+                    docker compose -f compose.ci.yaml run --rm check \
+                        --fail --silent --show-error \
+                        --retry 15 --retry-delay 2 --retry-all-errors \
+                        --connect-timeout 2 --max-time 5 \
+                        http://api:8000/api/version \
+                        > backend-version.json
+
+                    cat backend-version.json
+
+                    expected=$(printf '{"version":"jenkins-%s"}' "$BUILD_NUMBER")
+                    actual=$(cat backend-version.json)
+
+                    test "$actual" = "$expected"
+                '''
+            }
+        }
+
         stage('Deliver frontend image') {
             steps {
                 withCredentials([

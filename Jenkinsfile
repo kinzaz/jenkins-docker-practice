@@ -95,81 +95,113 @@ pipeline {
 
         stage('Deliver frontend image') {
             steps {
-                sh '''
-                    docker save \
-                        -o "todo-web-jenkins-$BUILD_NUMBER.tar" \
-                        "todo-web:jenkins-$BUILD_NUMBER"
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'todo-deploy-ssh',
+                        keyFileVariable: 'DEPLOY_KEY',
+                        usernameVariable: 'DEPLOY_USER'
+                    )
+                ]) {
+                    sh '''
+                        docker save \
+                            -o "todo-web-jenkins-$BUILD_NUMBER.tar" \
+                            "todo-web:jenkins-$BUILD_NUMBER"
 
-                    scp \
-                        -i /home/jenkins-agent/.ssh/todo_deploy \
-                        -o IdentitiesOnly=yes \
-                        -o BatchMode=yes \
-                        -o StrictHostKeyChecking=yes \
-                        -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
-                        "todo-web-jenkins-$BUILD_NUMBER.tar" \
-                        devops@177.203.59.227:/home/devops/docker-jenkins/
+                        scp \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "todo-web-jenkins-$BUILD_NUMBER.tar" \
+                            "$DEPLOY_USER@177.203.59.227:/home/devops/docker-jenkins/"
 
-                    rm "todo-web-jenkins-$BUILD_NUMBER.tar"
-                '''
+                        rm "todo-web-jenkins-$BUILD_NUMBER.tar"
+                    '''
+                }
             }
         }
 
         stage('Load frontend image') {
             steps {
-                sh '''
-                    ssh \
-                        -i /home/jenkins-agent/.ssh/todo_deploy \
-                        -o IdentitiesOnly=yes \
-                        -o BatchMode=yes \
-                        -o StrictHostKeyChecking=yes \
-                        -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
-                        devops@177.203.59.227 \
-                        "sudo -n /usr/bin/docker load < /home/devops/docker-jenkins/todo-web-jenkins-$BUILD_NUMBER.tar"
-                '''
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'todo-deploy-ssh',
+                        keyFileVariable: 'DEPLOY_KEY',
+                        usernameVariable: 'DEPLOY_USER'
+                    )
+                ]) {
+                    sh '''
+                        ssh \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "$DEPLOY_USER@177.203.59.227" \
+                            "sudo -n /usr/bin/docker load < /home/devops/docker-jenkins/todo-web-jenkins-$BUILD_NUMBER.tar"
+                    '''
+                }
             }
         }
 
         stage('Deliver deployment script') {
             steps {
-                sh '''
-                    bash -n scripts/deploy-web.sh
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'todo-deploy-ssh',
+                        keyFileVariable: 'DEPLOY_KEY',
+                        usernameVariable: 'DEPLOY_USER'
+                    )
+                ]) {
+                    sh '''
+                        bash -n scripts/deploy-web.sh
 
-                    scp \
-                        -i /home/jenkins-agent/.ssh/todo_deploy \
-                        -o IdentitiesOnly=yes \
-                        -o BatchMode=yes \
-                        -o StrictHostKeyChecking=yes \
-                        -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
-                        scripts/deploy-web.sh \
-                        devops@177.203.59.227:/home/devops/docker-jenkins/deploy-web.sh.next
+                        scp \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            scripts/deploy-web.sh \
+                            "$DEPLOY_USER@177.203.59.227:/home/devops/docker-jenkins/deploy-web.sh.next"
 
-                    ssh \
-                        -i /home/jenkins-agent/.ssh/todo_deploy \
-                        -o IdentitiesOnly=yes \
-                        -o BatchMode=yes \
-                        -o StrictHostKeyChecking=yes \
-                        -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
-                        devops@177.203.59.227 \
-                        'cd /home/devops/docker-jenkins &&
-                         bash -n deploy-web.sh.next &&
-                         chmod 700 deploy-web.sh.next &&
-                         mv deploy-web.sh.next deploy-web.sh'
-                '''
+                        ssh \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "$DEPLOY_USER@177.203.59.227" \
+                            'cd /home/devops/docker-jenkins &&
+                             bash -n deploy-web.sh.next &&
+                             chmod 700 deploy-web.sh.next &&
+                             mv deploy-web.sh.next deploy-web.sh'
+                    '''
+                }
             }
         }
 
         stage('Activate frontend') {
             steps {
-                sh '''
-                    ssh \
-                        -i /home/jenkins-agent/.ssh/todo_deploy \
-                        -o IdentitiesOnly=yes \
-                        -o BatchMode=yes \
-                        -o StrictHostKeyChecking=yes \
-                        -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
-                        devops@177.203.59.227 \
-                        "/home/devops/docker-jenkins/deploy-web.sh jenkins-$BUILD_NUMBER $SIMULATE_FAILURE"
-                '''
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'todo-deploy-ssh',
+                        keyFileVariable: 'DEPLOY_KEY',
+                        usernameVariable: 'DEPLOY_USER'
+                    )
+                ]) {
+                    sh '''
+                        ssh \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "$DEPLOY_USER@177.203.59.227" \
+                            "/home/devops/docker-jenkins/deploy-web.sh jenkins-$BUILD_NUMBER $SIMULATE_FAILURE"
+                    '''
+                }
             }
         }
     }

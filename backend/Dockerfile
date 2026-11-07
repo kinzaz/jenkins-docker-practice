@@ -12,7 +12,7 @@ ARG TARGETARCH
 ARG RELEASE=development
 
 RUN CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" \
-    go build -trimpath \
+    go build -p 1 -trimpath \
     -ldflags="-X main.version=$RELEASE" \
     -o /todo-api .
 

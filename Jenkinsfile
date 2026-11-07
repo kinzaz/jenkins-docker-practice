@@ -107,6 +107,21 @@ pipeline {
                 '''
             }
         }
+
+        stage('Activate frontend') {
+            steps {
+                sh '''
+                    ssh \
+                        -i /home/jenkins-agent/.ssh/todo_deploy \
+                        -o IdentitiesOnly=yes \
+                        -o BatchMode=yes \
+                        -o StrictHostKeyChecking=yes \
+                        -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                        devops@177.203.59.227 \
+                        "/home/devops/docker-jenkins/deploy-web.sh jenkins-$BUILD_NUMBER"
+                '''
+            }
+        }
     }
 
     post {

@@ -362,58 +362,6 @@ pipeline {
             }
         }
 
-        stage('Deliver frontend image') {
-            steps {
-                withCredentials([
-                    sshUserPrivateKey(
-                        credentialsId: 'todo-deploy-ssh',
-                        keyFileVariable: 'DEPLOY_KEY',
-                        usernameVariable: 'DEPLOY_USER'
-                    )
-                ]) {
-                    sh '''
-                        docker save \
-                            -o "todo-web-jenkins-$BUILD_NUMBER.tar" \
-                            "todo-web:jenkins-$BUILD_NUMBER"
-
-                        scp \
-                            -i "$DEPLOY_KEY" \
-                            -o IdentitiesOnly=yes \
-                            -o BatchMode=yes \
-                            -o StrictHostKeyChecking=yes \
-                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
-                            "todo-web-jenkins-$BUILD_NUMBER.tar" \
-                            "$DEPLOY_USER@177.203.59.227:/home/devops/docker-jenkins/"
-
-                        rm "todo-web-jenkins-$BUILD_NUMBER.tar"
-                    '''
-                }
-            }
-        }
-
-        stage('Load frontend image') {
-            steps {
-                withCredentials([
-                    sshUserPrivateKey(
-                        credentialsId: 'todo-deploy-ssh',
-                        keyFileVariable: 'DEPLOY_KEY',
-                        usernameVariable: 'DEPLOY_USER'
-                    )
-                ]) {
-                    sh '''
-                        ssh \
-                            -i "$DEPLOY_KEY" \
-                            -o IdentitiesOnly=yes \
-                            -o BatchMode=yes \
-                            -o StrictHostKeyChecking=yes \
-                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
-                            "$DEPLOY_USER@177.203.59.227" \
-                            "sudo -n /usr/bin/docker load < /home/devops/docker-jenkins/todo-web-jenkins-$BUILD_NUMBER.tar"
-                    '''
-                }
-            }
-        }
-
         stage('Deliver deployment script') {
             steps {
                 withCredentials([

@@ -25,7 +25,7 @@ services:
         condition: service_healthy
 
   web:
-    image: todo-web:${WEB_TAG:-lesson-5}
+    image: ghcr.io/kinzaz/todo-web:${WEB_TAG:-lesson-5}
     ports:
       - "127.0.0.1:8080:80"
     depends_on:

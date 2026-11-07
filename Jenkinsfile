@@ -93,6 +93,22 @@ pipeline {
             }
         }
 
+        stage('Build backend image') {
+            steps {
+                sh '''
+                    docker buildx build \
+                        --platform linux/amd64 \
+                        --load \
+                        --build-arg "RELEASE=jenkins-$BUILD_NUMBER" \
+                        -t "todo-api:jenkins-$BUILD_NUMBER" \
+                        backend
+
+                    docker image inspect "todo-api:jenkins-$BUILD_NUMBER" \
+                        --format '{{.Os}}/{{.Architecture}} {{.Id}}'
+                '''
+            }
+        }
+
         stage('Deliver frontend image') {
             steps {
                 withCredentials([

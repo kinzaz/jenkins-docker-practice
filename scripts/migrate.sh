@@ -42,4 +42,16 @@ INSERT INTO schema_migrations (version) VALUES ('$version');
 SQL
 done
 
-docker compose exec -T db     psql -X -w -v ON_ERROR_STOP=1 --single-transaction     -U todo -d "$database" < "$sql_file"
+compose_command=(docker compose)
+
+if [[ "${MIGRATION_USE_SUDO:-false}" == true ]]; then
+    compose_command=(
+        sudo -n /usr/bin/docker compose
+        --project-directory /home/devops/docker-jenkins
+        -f /home/devops/docker-jenkins/compose.yaml
+    )
+fi
+
+"${compose_command[@]}" exec -T db \
+    psql -X -w -v ON_ERROR_STOP=1 --single-transaction \
+    -U todo -d "$database" < "$sql_file"

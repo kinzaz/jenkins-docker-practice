@@ -41,6 +41,21 @@ pipeline {
                 '''
             }
         }
+
+        stage('Check frontend image') {
+            steps {
+                sh '''
+                    docker run --rm \
+                        --entrypoint sh \
+                        "todo-web:jenkins-$BUILD_NUMBER" \
+                        -ec '
+                            test -s /usr/share/nginx/html/index.html
+                            test -d /usr/share/nginx/html/assets
+                            nginx -t
+                        '
+                '''
+            }
+        }
     }
 
     post {

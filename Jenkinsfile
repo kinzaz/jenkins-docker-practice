@@ -235,6 +235,55 @@ pipeline {
             }
         }
 
+        stage('Apply database migrations') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'todo-deploy-ssh',
+                        keyFileVariable: 'DEPLOY_KEY',
+                        usernameVariable: 'DEPLOY_USER'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
+
+                        archive="migrations-jenkins-$BUILD_NUMBER.tar.gz"
+                        remote_dir="/home/devops/docker-jenkins/migration-releases/jenkins-$BUILD_NUMBER"
+
+                        trap 'rm -f "$archive"' EXIT
+
+                        bash -n scripts/migrate.sh
+
+                        tar -czf "$archive" \
+                            scripts/migrate.sh \
+                            backend/migrations
+
+                        scp \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "$archive" \
+                            "$DEPLOY_USER@177.203.59.227:/home/devops/docker-jenkins/"
+
+                        ssh \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "$DEPLOY_USER@177.203.59.227" \
+                            "mkdir -p '$remote_dir' &&
+                             tar -xzf '/home/devops/docker-jenkins/$archive' -C '$remote_dir' &&
+                             flock -n /home/devops/docker-jenkins/.deploy.lock \
+                                 env MIGRATION_USE_SUDO=true \
+                                 bash '$remote_dir/scripts/migrate.sh' todo"
+                    '''
+                }
+            }
+        }
+
         stage('Activate backend') {
             steps {
                 withCredentials([

@@ -153,6 +153,46 @@ pipeline {
             }
         }
 
+        stage('Deliver backend image') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'todo-deploy-ssh',
+                        keyFileVariable: 'DEPLOY_KEY',
+                        usernameVariable: 'DEPLOY_USER'
+                    )
+                ]) {
+                    sh '''
+                        archive="todo-api-jenkins-$BUILD_NUMBER.tar"
+
+                        docker save \
+                            -o "$archive" \
+                            "todo-api:jenkins-$BUILD_NUMBER"
+
+                        scp \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "$archive" \
+                            "$DEPLOY_USER@177.203.59.227:/home/devops/docker-jenkins/"
+
+                        ssh \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "$DEPLOY_USER@177.203.59.227" \
+                            "sudo -n /usr/bin/docker load < /home/devops/docker-jenkins/$archive"
+
+                        rm "$archive"
+                    '''
+                }
+            }
+        }
+
         stage('Deliver frontend image') {
             steps {
                 withCredentials([

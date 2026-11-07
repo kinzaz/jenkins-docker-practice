@@ -1,0 +1,35 @@
+name: docker-jenkins
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: todo
+      POSTGRES_USER: todo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "todo", "-d", "todo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    image: todo-api:${TODO_TAG:-lesson-5}
+    environment:
+      HTTP_ADDR: "0.0.0.0:8000"
+      DATABASE_URL: "postgres://todo:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/todo?sslmode=disable"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: todo-web:${TODO_TAG:-lesson-5}
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

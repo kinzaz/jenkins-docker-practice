@@ -33,6 +33,7 @@ pipeline {
                     docker buildx build \
                         --platform linux/amd64 \
                         --load \
+                        --build-arg "RELEASE=jenkins-$BUILD_NUMBER" \
                         -t "todo-web:jenkins-$BUILD_NUMBER" \
                         frontend
 

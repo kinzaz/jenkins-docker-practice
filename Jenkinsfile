@@ -193,6 +193,66 @@ pipeline {
             }
         }
 
+        stage('Deliver backend deployment script') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'todo-deploy-ssh',
+                        keyFileVariable: 'DEPLOY_KEY',
+                        usernameVariable: 'DEPLOY_USER'
+                    )
+                ]) {
+                    sh '''
+                        bash -n scripts/deploy-api.sh
+
+                        scp \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            scripts/deploy-api.sh \
+                            "$DEPLOY_USER@177.203.59.227:/home/devops/docker-jenkins/deploy-api.sh.next"
+
+                        ssh \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "$DEPLOY_USER@177.203.59.227" \
+                            'cd /home/devops/docker-jenkins &&
+                             bash -n deploy-api.sh.next &&
+                             chmod 700 deploy-api.sh.next &&
+                             mv deploy-api.sh.next deploy-api.sh'
+                    '''
+                }
+            }
+        }
+
+        stage('Activate backend') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'todo-deploy-ssh',
+                        keyFileVariable: 'DEPLOY_KEY',
+                        usernameVariable: 'DEPLOY_USER'
+                    )
+                ]) {
+                    sh '''
+                        ssh \
+                            -i "$DEPLOY_KEY" \
+                            -o IdentitiesOnly=yes \
+                            -o BatchMode=yes \
+                            -o StrictHostKeyChecking=yes \
+                            -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
+                            "$DEPLOY_USER@177.203.59.227" \
+                            "/home/devops/docker-jenkins/deploy-api.sh jenkins-$BUILD_NUMBER false"
+                    '''
+                }
+            }
+        }
+
         stage('Deliver frontend image') {
             steps {
                 withCredentials([

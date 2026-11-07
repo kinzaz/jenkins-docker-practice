@@ -133,6 +133,10 @@ pipeline {
                         psql -v ON_ERROR_STOP=1 -U todo -d todo \
                         < backend/migrations/001_create_todos.sql
 
+                    docker compose -f compose.ci.yaml exec -T db \
+                        psql -v ON_ERROR_STOP=1 -U todo -d todo \
+                        < backend/migrations/002_add_created_at.sql
+
                     docker compose -f compose.ci.yaml up -d api
 
                     docker compose -f compose.ci.yaml run --rm check \

@@ -21,9 +21,10 @@ type todoAPI struct {
 }
 
 type todo struct {
-	ID    int64  `json:"id"`
-	Title string `json:"title"`
-	Done  bool   `json:"done"`
+	ID        int64     `json:"id"`
+	Title     string    `json:"title"`
+	Done      bool      `json:"done"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func respond(w http.ResponseWriter, status int, value any) {
@@ -72,7 +73,7 @@ func (api todoAPI) health(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api todoAPI) list(w http.ResponseWriter, r *http.Request) {
-	rows, err := api.db.Query(r.Context(), "SELECT id, title, done FROM todos ORDER BY id DESC")
+	rows, err := api.db.Query(r.Context(), "SELECT id, title, done, created_at FROM todos ORDER BY id DESC")
 	if err != nil {
 		dbError(w, err)
 		return
@@ -96,8 +97,8 @@ func (api todoAPI) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var item todo
-	err := api.db.QueryRow(r.Context(), "INSERT INTO todos (title) VALUES ($1) RETURNING id, title, done", title).
-		Scan(&item.ID, &item.Title, &item.Done)
+	err := api.db.QueryRow(r.Context(), "INSERT INTO todos (title) VALUES ($1) RETURNING id, title, done, created_at", title).
+		Scan(&item.ID, &item.Title, &item.Done, &item.CreatedAt)
 	if err != nil {
 		dbError(w, err)
 		return
@@ -119,8 +120,8 @@ func (api todoAPI) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var item todo
-	err := api.db.QueryRow(r.Context(), "UPDATE todos SET done = $1 WHERE id = $2 RETURNING id, title, done", *input.Done, id).
-		Scan(&item.ID, &item.Title, &item.Done)
+	err := api.db.QueryRow(r.Context(), "UPDATE todos SET done = $1 WHERE id = $2 RETURNING id, title, done, created_at", *input.Done, id).
+		Scan(&item.ID, &item.Title, &item.Done, &item.CreatedAt)
 	if err != nil {
 		dbError(w, err)
 		return

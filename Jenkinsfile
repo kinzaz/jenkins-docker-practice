@@ -9,6 +9,11 @@ pipeline {
             defaultValue: false,
             description: 'Fail after activation to test automatic rollback'
         )
+        booleanParam(
+            name: 'SIMULATE_BACKEND_FAILURE',
+            defaultValue: false,
+            description: 'Fail after backend activation to test rollback'
+        )
     }
 
     options {
@@ -247,7 +252,7 @@ pipeline {
                             -o StrictHostKeyChecking=yes \
                             -o UserKnownHostsFile=/home/jenkins-agent/.ssh/todo_known_hosts \
                             "$DEPLOY_USER@177.203.59.227" \
-                            "/home/devops/docker-jenkins/deploy-api.sh jenkins-$BUILD_NUMBER false"
+                            "/home/devops/docker-jenkins/deploy-api.sh jenkins-$BUILD_NUMBER $SIMULATE_BACKEND_FAILURE"
                     '''
                 }
             }
